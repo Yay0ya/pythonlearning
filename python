@@ -1,0 +1,110 @@
+mport requests
+import re
+from bs4 import BeautifulSoup
+from lxml import etree
+import urllib3.contrib.pyopenssl
+urllib3.contrib.pyopenssl.inject_into_urllib3()
+from pyquery import PyQuery as pq
+import urllib3 as  ulb
+import random
+import time
+
+a=9274
+
+def get(url):
+    global a
+    r = ''
+    i=0
+    while r=='':
+     try:
+         r=requests.get(url)
+         break
+     except:
+       print("Connection refused by the server..")
+       print("Let me sleep for 5 seconds")
+       print("ZZzzzz...")
+       time.sleep(20)
+       print("Was a nice sleep, now let me continue...")
+       i=i+1
+       if i<5:
+        continue
+       else:
+           return
+    if r is None:
+        return
+    content = BeautifulSoup(r.text,'lxml')
+    soup = r.text
+    html = etree.HTML(soup)
+    filename = str(a)+'.txt'
+    f= open(filename,"a",encoding='utf-8')
+    num = 0
+    question = html.xpath('/html/body/div/div/div/div/div/h1/a/text()')
+    question_recomend = html.xpath('/html/body/div/div/div/div/div/div/div/div/div/div/text()')
+    question_content = html.xpath('/html/body/div/div/div/div/div/div[@class="question"]/div/div/div[@class="post-text"]/*')
+    answer_recomend = html.xpath('/html/body/div/div/div/div/div/div/div/div/div/div/div/text()')
+    answer_content = html.xpath('/html/body/div/div/div/div/div/div/div/div/div/div[@class="post-text"]/*')#将回答的答案被接受的模块抽取出来
+    if answer_content is None:
+        return
+       #answer_j = answer_re.find(class_='post-text')
+    sep = " "
+    print("****************************************")
+    print(answer_content)
+    print("****************************************")
+    f.write("问题\n")
+    f.write(sep.join(question))
+    f.write("\n")
+    for item  in  question_recomend:
+        f.write("受赞数")
+        f.write(item+"\n")
+        break
+    f.write("问题内容：\n")
+    for con in question_content:
+        qinfo = con.xpath("string(.)")
+        f.write(qinfo)
+    f.write("\n答案：\n")
+    for n in answer_content:
+        info=n.xpath("string(.)")
+        f.write(info)
+    f.close()
+    a=a+1
+
+
+def crawl(url):
+    arr=[]
+    i=0
+    r=''
+    while r == '':
+        try:
+            r = requests.get(url)
+            break
+        except:
+            print("Connection refused by the server..")
+            print("Let me sleep for 5 seconds")
+            print("ZZzzzz...")
+            time.sleep(20)
+            print("Was a nice sleep, now let me continue...")
+            continue
+    soup = BeautifulSoup(r.text,'lxml')
+    for link in soup.find_all('a', class_='question-hyperlink'):
+        arr.append('https://stackoverflow.com'+link.get('href'))
+        get(arr[i])
+
+        i=i+1
+        if(i==50):
+            break
+
+
+
+def next_page():
+    Str = 'https://stackoverflow.com'
+    i=200
+    while i<=30687:
+        url = Str+'/questions/tagged/java?sort=votes&page='+str(i)+'&pagesize=50'
+        crawl(url)
+        i=i+1
+
+
+next_page()
+print(a)
+
+
